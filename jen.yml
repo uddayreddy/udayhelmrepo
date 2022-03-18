@@ -1,0 +1,71 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: jenkinsapp
+  namespace: test-ns
+spec:
+  selector:
+    matchLabels:
+      app: jenkins
+  template:
+    metadata:
+      labels:
+        app: jenkins
+    spec:
+      containers:
+      - name: jenkins
+        image: jenkins/jenkins:lts
+        resources:
+          limits:
+            memory: "256Mi"
+            cpu: "500m"
+        ports:
+        - containerPort: 8080
+        livenessProbe:
+          httpGet:
+            path: /jenkins
+            port: 8080
+          initialDelaySeconds: 30
+          periodSeconds: 5
+          timeoutSeconds: 5
+        readinessProbe: 
+          httpGet: 
+            path: /jenkins
+            port: 8080 
+          initialDelaySeconds: 30
+          periodSeconds: 5
+          timeoutSeconds: 5
+        volumeMounts:
+        - name: jenkinsvol
+          mountPath: "/var/jenkins_home"
+      volumes: 
+      - name: jenkinsvol
+        persistentVolumeClaim: 
+          claimName: jenkinspvc
+--- 
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: jenkinspvc
+  namespace: test-ns
+spec:
+  resources:
+    requests:
+      storage: "500Mi"
+  volumeMode: Filesystem
+  accessModes:
+    - ReadWriteOnce
+--- 
+apiVersion: v1
+kind: Service
+metadata:
+  name: jenkinssvc
+  namespace: test-ns
+spec:
+  type: LoadBalancer
+  selector:
+    app: jenkins 
+  ports:
+  - port: 80
+    targetPort: 8080
+

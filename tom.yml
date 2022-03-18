@@ -1,0 +1,44 @@
+apiVersion: v1
+kind: ReplicationController
+metadata:
+  name: springapprc
+  namespace: test-ns
+spec:
+  replicas: 1
+  selector:
+    app: springapp
+  template:
+    metadata:
+      name: springapppod
+      labels:
+        app: springapp
+    spec:
+      containers:
+        - name: springcontainer
+          image: udaydk/maven-web-application:3
+          ports:
+            - containerPort: 8080
+        - name: mavenapp
+          image: udaydk/maven-web-application:3
+          ports:
+          - containerPort: 80
+          resources:
+            requests:
+              cpu: 1 
+              memory: 512Mi
+            limits: 
+              cpu: 1
+              memory: 1Gi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: springsvc
+  namespace: test-ns
+spec:
+  type: ClusterIP
+  selector:
+    app: springapp
+  ports:
+  - port: 80
+    targetPort: 8080
